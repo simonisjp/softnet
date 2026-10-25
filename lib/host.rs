@@ -1,3 +1,4 @@
+use crate::proxy::ExposedPort;
 use crate::subnet_finder;
 use anyhow::{Context, Result, anyhow};
 use clap::ValueEnum;
@@ -42,6 +43,7 @@ impl Host {
         vm_net_type: NetType,
         vm_mac: EthernetAddress,
         enable_isolation: bool,
+        exposed_ports: &[ExposedPort],
     ) -> Result<Host> {
         // Find an unused /29 subnet for the gateway and VM
         let (gateway_ip, vm_ip, subnet) = subnet_finder::find_available_subnet(29)?;
@@ -64,6 +66,28 @@ impl Host {
             .add_dhcp_reservation(vm_mac.0, vm_ip)
             .context("failed to add DHCP address reservation")?;
 
+        // Forward the exposed ports to the VM's reserved address
+        let port_forwardings: Vec<String> = exposed_ports
+            .iter()
+            .map(|port| {
+                format!(
+                    "external_port={}, internal_addr={vm_ip}, internal_port={}",
+                    port.external_port, port.internal_port
+                )
+            })
+            .collect();
+        for (port, details) in exposed_ports.iter().zip(&port_forwardings) {
+            configuration
+                .add_port_forwarding_rule(
+                    AddressFamily::Ipv4,
+                    Protocol::Tcp,
+                    port.external_port,
+                    vm_ip.into(),
+                    port.internal_port,
+                )
+                .with_context(|| format!("failed to add port forwarding rule {details}"))?;
+        }
+
         // Create vmnet's network
         let network = Network::new(&configuration)
             .with_context(|| format!("failed to create vmnet network {subnet}"))?;
@@ -80,6 +104,10 @@ impl Host {
             },
         )
         .context("failed to initialize vmnet interface")?;
+
+        for details in &port_forwardings {
+            info!("added port forwarding rule {details}");
+        }
 
         // Retrieve max packet size for this interface
         let Some(Parameter::MaxPacketSize(max_packet_size)) =
@@ -130,28 +158,6 @@ impl Host {
 }
 
 impl Host {
-    pub fn port_forwarding_add_rule(
-        &mut self,
-        external_port: u16,
-        internal_addr: Ipv4Addr,
-        internal_port: u16,
-    ) -> Result<()> {
-        let details = format!(
-            "external_port={external_port}, internal_addr={internal_addr}, internal_port={internal_port}"
-        );
-
-        self.interface
-            .port_forwarding_rule_add(
-                AddressFamily::Ipv4,
-                Protocol::Tcp,
-                external_port,
-                internal_addr.into(),
-                internal_port,
-            )
-            .map(|_| info!("added port forwarding rule {details}"))
-            .map_err(|err| anyhow!("failed to add port forwarding rule {details}: {err}"))
-    }
-
     pub async fn read(&mut self, batch: &mut Batch, bufs: &mut [Vec<u8>]) -> vmnet::Result<usize> {
         loop {
             // One callback can cover several batches; stay ready until an empty read

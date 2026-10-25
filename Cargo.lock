@@ -660,6 +660,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dispatch2"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e0e367e4e7da84520dedcac1901e4da967309406d1e51017ae1abfb97adbd38"
+dependencies = [
+ "bitflags 2.13.2",
+]
+
+[[package]]
 name = "displaydoc"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2859,12 +2868,12 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vmnet"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b7a1fba175b6ff0e54e30ead88d7ae7a4c6939bb81a2228e8af7e0897d38061"
+version = "0.9.0"
+source = "git+https://github.com/simonisjp/vmnet?branch=network-configuration-port-forwarding#4ad5e8afbc1c63878685d6bc3c84cd5eab855cac"
 dependencies = [
  "bitflags 2.13.2",
  "block2",
+ "dispatch2",
  "enum-iterator",
  "hexdump",
  "lazy_static",
@@ -2880,9 +2889,8 @@ dependencies = [
 
 [[package]]
 name = "vmnet-derive"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "805fcba7fb9fa3dbf5ff2680916f9797321eed33f91cd618f93a98f84b3144bd"
+version = "0.9.0"
+source = "git+https://github.com/simonisjp/vmnet?branch=network-configuration-port-forwarding#4ad5e8afbc1c63878685d6bc3c84cd5eab855cac"
 dependencies = [
  "darling",
  "proc-macro2",

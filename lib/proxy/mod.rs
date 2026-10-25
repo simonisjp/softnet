@@ -10,7 +10,7 @@ use crate::dhcp_server::{DHCP_SERVER_MAC, DhcpServer};
 use crate::host::Host;
 use crate::host::NetType;
 use crate::vm::VM;
-use anyhow::{Context, Result, bail};
+use anyhow::{Result, bail};
 use control::{Control, normalize_rules};
 pub use exposed_port::ExposedPort;
 use flows::{FlowTable, PendingFlow};
@@ -57,10 +57,11 @@ impl Proxy {
         let block = normalize_rules(block);
 
         let vm = VM::new(vm_fd)?;
-        let mut host = Host::new(
+        let host = Host::new(
             vm_net_type,
             vm_mac_address,
             !allow.contains(&Rule::Stateless(Target::Prefix(Ipv4Net::default()))),
+            &exposed_ports,
         )?;
         let control = control_fd
             .map(|control_fd| {
@@ -82,12 +83,6 @@ impl Proxy {
             host.subnet_mask,
             host.gateway_ip,
         );
-
-        // Install port forwardings for the reserved VM's IP address
-        for port in exposed_ports {
-            host.port_forwarding_add_rule(port.external_port, host.vm_ip, port.internal_port)
-                .context("failed to configure port forwarding")?;
-        }
 
         Ok(Proxy {
             vm,

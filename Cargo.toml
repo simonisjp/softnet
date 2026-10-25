@@ -19,7 +19,7 @@ tokio-util = { version = "0.7", features = ["codec"] }
 bytes = "1"
 futures-util = { version = "0.3", default-features = false, features = ["std", "sink"] }
 dhcproto = { git = "https://github.com/bluecatengineering/dhcproto.git", branch = "master" }
-vmnet = "0.7.0"
+vmnet = "0.9.0"
 clap = { version = "4", features = ["derive"] }
 mac_address = "1"
 privdrop = "0"
@@ -44,3 +44,6 @@ jsonrpsee-types = "0.26"
 
 [profile.release]
 debug = true
+
+[patch.crates-io]
+vmnet = { git = "https://github.com/simonisjp/vmnet", branch = "network-configuration-port-forwarding" }
